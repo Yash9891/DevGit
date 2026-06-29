@@ -1,0 +1,511 @@
+# =============================================================================
+#  PYTHON FUNCTIONS — Complete Reference Guide
+#  Author  : Yash
+#  Purpose : Understand functions in Python from scratch
+# =============================================================================
+
+
+# -----------------------------------------------------------------------------
+# WHAT IS A FUNCTION?
+# -----------------------------------------------------------------------------
+# A function is a reusable block of code that performs a specific task.
+# You define it once and call it as many times as you need.
+#
+# Why use functions?
+#   • Avoid repeating the same code (DRY — Don't Repeat Yourself)
+#   • Break big problems into smaller pieces
+#   • Make code easier to read, test, and fix
+#
+# Python has 3 types of functions:
+#   1. Built-in functions   → print(), len(), type()  (already available)
+#   2. User-defined         → functions YOU write with 'def'
+#   3. Lambda functions     → small anonymous functions written in one line
+
+
+# =============================================================================
+# 1. DEFINING AND CALLING A FUNCTION
+# =============================================================================
+# Syntax:
+#   def function_name(parameters):
+#       """docstring — explains what the function does"""
+#       # code block
+#       return value   ← optional
+
+# ── Simplest function — no parameters, no return ─────────────────────────────
+def greet():
+    """Prints a simple greeting."""
+    print("Hello, World!")
+
+greet()   # Output: Hello, World!
+greet()   # call it again — same result
+greet()   # call it as many times as you like
+
+
+# ── Function with a parameter ────────────────────────────────────────────────
+def greet_user(name):
+    """Greets a specific user by name."""
+    print(f"Hello, {name}!")
+
+greet_user("Yash")       # Hello, Yash!
+greet_user("Prashant")   # Hello, Prashant!
+
+
+# ── Function with return value ────────────────────────────────────────────────
+def add(a, b):
+    """Returns the sum of two numbers."""
+    result = a + b
+    return result
+
+total = add(10, 5)
+print(total)         # 15
+print(add(3, 7))     # 10  — use the return value directly
+
+
+# =============================================================================
+# 2. PARAMETERS vs ARGUMENTS
+# =============================================================================
+# Parameter → the variable name in the function definition
+# Argument  → the actual value you pass when calling the function
+
+def introduce(name, age):      # name and age are PARAMETERS
+    print(f"I am {name}, {age} years old.")
+
+introduce("Yash", 20)          # "Yash" and 20 are ARGUMENTS
+introduce("Prashant", 22)
+
+
+# =============================================================================
+# 3. TYPES OF ARGUMENTS
+# =============================================================================
+
+# ── 3a. Positional arguments — order matters ──────────────────────────────────
+def student_info(name, age, city):
+    print(f"{name} | {age} | {city}")
+
+student_info("Yash", 20, "Delhi")       # matches left to right
+# student_info("Delhi", "Yash", 20)    # ⚠️  order matters!
+
+
+# ── 3b. Keyword arguments — order does NOT matter ─────────────────────────────
+student_info(city="Delhi", name="Yash", age=20)   # same result, any order
+
+
+# ── 3c. Default arguments — used when no value is passed ─────────────────────
+def greet(name, message="Good morning"):   # message has a default value
+    print(f"{message}, {name}!")
+
+greet("Yash")                      # Good morning, Yash!
+greet("Prashant", "Good evening")  # Good evening, Prashant!
+
+# ⚠️  Default parameters must come AFTER non-default ones
+# def wrong(message="Hi", name):   # ❌ SyntaxError
+#     pass
+
+
+# ── 3d. *args — accept any number of positional arguments ────────────────────
+# *args collects all extra positional arguments into a TUPLE
+
+def add_all(*numbers):
+    """Add any number of values."""
+    print(numbers)        # it's a tuple
+    return sum(numbers)
+
+print(add_all(1, 2))             # 3
+print(add_all(1, 2, 3, 4, 5))   # 15
+print(add_all(10, 20, 30))       # 60
+
+def greet_all(*names):
+    for name in names:
+        print(f"Hello, {name}!")
+
+greet_all("Yash", "Prashant", "Rohit", "Aarav")
+
+
+# ── 3e. **kwargs — accept any number of keyword arguments ────────────────────
+# **kwargs collects all extra keyword arguments into a DICTIONARY
+
+def print_info(**details):
+    """Print any number of key-value details."""
+    print(details)       # it's a dictionary
+    for key, value in details.items():
+        print(f"  {key}: {value}")
+
+print_info(name="Yash", age=20, city="Delhi", course="Python")
+
+# Mix *args and **kwargs together
+def mixed(*args, **kwargs):
+    print("Positional:", args)
+    print("Keyword:   ", kwargs)
+
+mixed(1, 2, 3, name="Yash", age=20)
+# Positional: (1, 2, 3)
+# Keyword:    {'name': 'Yash', 'age': 20}
+
+
+# =============================================================================
+# 4. RETURN STATEMENT
+# =============================================================================
+
+# ── Return a single value ─────────────────────────────────────────────────────
+def square(n):
+    return n ** 2
+
+print(square(5))    # 25
+print(square(9))    # 81
+
+
+# ── Return multiple values (actually returns a tuple) ─────────────────────────
+def min_max(numbers):
+    return min(numbers), max(numbers)
+
+low, high = min_max([3, 1, 8, 5, 2])
+print(low, high)   # 1 8
+
+
+# ── Early return — exit the function before the end ──────────────────────────
+def divide(a, b):
+    if b == 0:
+        return "Error: cannot divide by zero"   # exits early
+    return a / b
+
+print(divide(10, 2))    # 5.0
+print(divide(10, 0))    # Error: cannot divide by zero
+
+
+# ── Functions without return give back None ───────────────────────────────────
+def say_hi():
+    print("Hi!")
+
+result = say_hi()    # prints "Hi!"
+print(result)        # None
+
+
+# =============================================================================
+# 5. SCOPE — where variables live
+# =============================================================================
+# Local scope  → variable created INSIDE a function (only visible inside)
+# Global scope → variable created OUTSIDE a function (visible everywhere)
+
+name = "Yash"   # global variable
+
+def show_name():
+    city = "Delhi"      # local variable — only exists inside this function
+    print(name)         # ✅ can READ a global variable
+    print(city)         # ✅ local variable visible here
+
+show_name()
+print(name)    # ✅ global variable accessible here
+# print(city)  # ❌ NameError — city doesn't exist outside the function
+
+
+# ── global keyword — modify a global variable inside a function ───────────────
+counter = 0
+
+def increment():
+    global counter       # tell Python we mean the GLOBAL counter
+    counter += 1
+
+increment()
+increment()
+increment()
+print(counter)    # 3
+
+
+# ── Enclosing scope — function inside a function ──────────────────────────────
+def outer():
+    message = "Hello from outer"
+
+    def inner():
+        print(message)    # inner can access outer's variable
+
+    inner()
+
+outer()   # Hello from outer
+
+
+# =============================================================================
+# 6. LAMBDA FUNCTIONS (anonymous functions)
+# =============================================================================
+# A lambda is a small, one-line function without a name.
+# Syntax:  lambda parameters : expression
+# Used when you need a simple function for a short time.
+
+# Regular function
+def square(n):
+    return n ** 2
+
+# Same thing as a lambda
+square_lambda = lambda n: n ** 2
+
+print(square(5))          # 25
+print(square_lambda(5))   # 25
+
+# Lambda with two parameters
+add = lambda a, b: a + b
+print(add(3, 7))    # 10
+
+# Lambda inside sorted() — sort by the second item in each tuple
+students = [("Yash", 95), ("Prashant", 88), ("Rohit", 76), ("Aarav", 91)]
+students.sort(key=lambda s: s[1])   # sort by score
+print(students)   # sorted by score ascending
+
+students.sort(key=lambda s: s[1], reverse=True)  # highest first
+print(students)
+
+# Lambda inside map()
+numbers = [1, 2, 3, 4, 5]
+doubled = list(map(lambda x: x * 2, numbers))
+print(doubled)    # [2, 4, 6, 8, 10]
+
+# Lambda inside filter()
+evens = list(filter(lambda x: x % 2 == 0, numbers))
+print(evens)      # [2, 4]
+
+
+# =============================================================================
+# 7. DOCSTRINGS — documenting your functions
+# =============================================================================
+# A docstring is a string written right after the def line.
+# It explains what the function does, its parameters, and its return value.
+# Access it with  function.__doc__  or  help(function)
+
+def calculate_area(length, width):
+    """
+    Calculate the area of a rectangle.
+
+    Parameters:
+        length (float) : the length of the rectangle
+        width  (float) : the width of the rectangle
+
+    Returns:
+        float : area of the rectangle
+    """
+    return length * width
+
+print(calculate_area(5, 3))            # 15
+print(calculate_area.__doc__)          # prints the docstring
+# help(calculate_area)                 # formatted version in terminal
+
+
+# =============================================================================
+# 8. RECURSION — a function that calls itself
+# =============================================================================
+# Recursion solves a problem by breaking it into smaller versions of itself.
+# Always needs a BASE CASE to stop (otherwise infinite loop → RecursionError).
+
+# ── Factorial using recursion ──────────────────────────────────────────────────
+# 5! = 5 × 4 × 3 × 2 × 1 = 120
+
+def factorial(n):
+    """Return n! (factorial of n)."""
+    if n == 0 or n == 1:    # base case — stop here
+        return 1
+    return n * factorial(n - 1)   # recursive call
+
+print(factorial(5))    # 120
+print(factorial(0))    # 1
+print(factorial(10))   # 3628800
+
+
+# ── Fibonacci using recursion ──────────────────────────────────────────────────
+# 0, 1, 1, 2, 3, 5, 8, 13, 21, ...
+
+def fibonacci(n):
+    """Return the nth Fibonacci number."""
+    if n <= 1:
+        return n
+    return fibonacci(n - 1) + fibonacci(n - 2)
+
+for i in range(10):
+    print(fibonacci(i), end=" ")   # 0 1 1 2 3 5 8 13 21 34
+print()
+
+
+# =============================================================================
+# 9. HIGHER-ORDER FUNCTIONS
+# =============================================================================
+# A higher-order function is one that:
+#   • Takes another function as a parameter, OR
+#   • Returns a function as its result
+
+# ── Passing a function as an argument ────────────────────────────────────────
+def apply(func, value):
+    """Apply any function to a value."""
+    return func(value)
+
+def double(x):  return x * 2
+def triple(x):  return x * 3
+
+print(apply(double, 5))    # 10
+print(apply(triple, 5))    # 15
+print(apply(str, 42))      # "42"  — even built-ins work
+
+
+# ── Returning a function from a function ──────────────────────────────────────
+def multiplier(factor):
+    """Returns a function that multiplies by factor."""
+    def multiply(number):
+        return number * factor
+    return multiply
+
+double = multiplier(2)
+triple = multiplier(3)
+
+print(double(5))    # 10
+print(triple(5))    # 15
+print(double(9))    # 18
+
+
+# =============================================================================
+# 10. USEFUL BUILT-IN HIGHER-ORDER FUNCTIONS
+# =============================================================================
+
+numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+# map() — apply a function to every item
+squares = list(map(lambda x: x**2, numbers))
+print(squares)   # [1, 4, 9, 16, 25, 36, 49, 64, 81, 100]
+
+# filter() — keep items where function returns True
+evens   = list(filter(lambda x: x % 2 == 0, numbers))
+print(evens)     # [2, 4, 6, 8, 10]
+
+# sorted() with a key function
+words = ["banana", "apple", "cherry", "date", "fig"]
+print(sorted(words))              # alphabetical
+print(sorted(words, key=len))     # by length
+print(sorted(words, key=lambda w: w[-1]))  # by last character
+
+
+# =============================================================================
+# QUICK REFERENCE TABLE
+# =============================================================================
+#
+#  Concept               Syntax                       Notes
+#  ──────────────────    ─────────────────────────    ──────────────────────────
+#  Define function       def name(params):            Ends with colon
+#  Call function         name(arguments)
+#  Return value          return expression            Exits the function
+#  No return             (omit return)                Returns None implicitly
+#  Positional args       f(1, 2, 3)                   Order matters
+#  Keyword args          f(a=1, b=2)                  Order doesn't matter
+#  Default args          def f(x, y=10):              y is optional
+#  Variable positional   def f(*args):                Collects as tuple
+#  Variable keyword      def f(**kwargs):             Collects as dict
+#  Lambda                lambda x: x * 2             One-line function
+#  Docstring             """description"""            First line after def
+#  Recursion             def f(n): return f(n-1)      Needs a base case
+#  Global variable       global var_name              Modify global inside fn
+#  Nested function       def outer(): def inner():    inner() only in outer
+
+
+# =============================================================================
+# PRACTICE QUESTIONS
+# =============================================================================
+
+# Q1. Write a function that takes a name and age, and prints:
+#     "Hi, I am Yash and I am 20 years old."
+# ------ Solution ------
+def introduce(name, age):
+    print(f"Hi, I am {name} and I am {age} years old.")
+
+introduce("Yash", 20)
+
+
+# Q2. Write a function that returns the largest of three numbers.
+# ------ Solution ------
+def largest(a, b, c):
+    return max(a, b, c)
+
+print(largest(10, 45, 30))   # 45
+
+
+# Q3. Write a function using *args that returns the average of any numbers.
+# ------ Solution ------
+def average(*nums):
+    return sum(nums) / len(nums)
+
+print(average(10, 20, 30))         # 20.0
+print(average(5, 15, 25, 35, 45))  # 25.0
+
+
+# Q4. Write a function using **kwargs that prints a student's profile.
+# ------ Solution ------
+def print_profile(**info):
+    for key, value in info.items():
+        print(f"  {key.capitalize()}: {value}")
+
+print_profile(name="Yash", age=20, city="Delhi", grade="A")
+
+
+# Q5. Write a lambda to check if a number is even. Use it with filter()
+#     to get all even numbers from 1 to 20.
+# ------ Solution ------
+is_even = lambda x: x % 2 == 0
+evens   = list(filter(is_even, range(1, 21)))
+print(evens)
+
+
+# Q6. Write a recursive function to calculate the sum of digits of a number.
+#     e.g. sum_digits(1234) → 10
+# ------ Solution ------
+def sum_digits(n):
+    if n == 0:
+        return 0
+    return n % 10 + sum_digits(n // 10)
+
+print(sum_digits(1234))    # 10
+print(sum_digits(9999))    # 36
+
+
+# Q7. Write a function power(base, exp=2) where exp defaults to 2.
+#     Test: power(3) → 9,  power(3, 3) → 27
+# ------ Solution ------
+def power(base, exp=2):
+    return base ** exp
+
+print(power(3))      # 9
+print(power(3, 3))   # 27
+print(power(2, 10))  # 1024
+
+
+# Q8. Write a higher-order function apply_twice(func, value) that applies
+#     a function to a value TWICE.
+#     e.g. apply_twice(double, 3) → 12  (double(double(3)) = double(6) = 12)
+# ------ Solution ------
+def apply_twice(func, value):
+    return func(func(value))
+
+double = lambda x: x * 2
+print(apply_twice(double, 3))    # 12
+print(apply_twice(double, 5))    # 20
+
+
+# Q9. Write a function that takes a list of names and returns only those
+#     names longer than 4 characters using filter() and lambda.
+# ------ Solution ------
+def long_names(names):
+    return list(filter(lambda n: len(n) > 4, names))
+
+print(long_names(["Yash", "Prashant", "Rohit", "Aarav", "Meera", "Jo"]))
+# ['Prashant', 'Rohit', 'Aarav', 'Meera']
+
+
+# Q10. Write a function make_greeting(greeting) that returns a personalised
+#      greeting function. Use it to make say_hello and say_hi.
+# ------ Solution ------
+def make_greeting(greeting):
+    def greet(name):
+        print(f"{greeting}, {name}!")
+    return greet
+
+say_hello = make_greeting("Hello")
+say_hi    = make_greeting("Hi there")
+
+say_hello("Yash")       # Hello, Yash!
+say_hi("Prashant")      # Hi there, Prashant!
+
+
+# =============================================================================
+# END OF FILE
+# =============================================================================
