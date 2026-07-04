@@ -1,509 +1,1106 @@
 # =============================================================================
-#  PYTHON FUNCTIONS — Complete Reference Guide
+#  PYTHON FILE HANDLING — Complete Guide (Basic to Advanced)
 #  Author  : Yash
-#  Purpose : Understand functions in Python from scratch
+#  Purpose : Learn how to work with TXT, CSV, and JSON files in Python
 # =============================================================================
 
+# FOLDER STRUCTURE (YOU CREATE THESE MANUALLY):
+# ──────────────────────────────────────────────
+# filehandling_project/
+# │
+# ├── filehandling.py              ← You are here (this file)
+# │
+# ├── data/
+# │   ├── txt/
+# │   │   ├── intro.txt
+# │   │   ├── poem.txt
+# │   │   └── notes.txt
+# │   ├── csv/
+# │   │   ├── students.csv
+# │   │   └── products.csv
+# │   └── json/
+# │       ├── student.json
+# │       ├── students_list.json
+# │       └── config.json
+# │
+# ├── output/                      ← keep this folder empty, script fills it
+# └── backup/                      ← keep this folder empty, script fills it
 
 # -----------------------------------------------------------------------------
-# WHAT IS A FUNCTION?
+# WHAT IS FILE HANDLING?
 # -----------------------------------------------------------------------------
-# A function is a reusable block of code that performs a specific task.
-# You define it once and call it as many times as you need.
+# File handling means reading data FROM files and writing data INTO files.
+# In real projects, you almost always need to:
+#   - Save data so it is not lost when the program closes
+#   - Read data from files created by someone else (CSV reports, JSON APIs)
+#   - Write log files to track what happened in the program
 #
-# Why use functions?
-#   • Avoid repeating the same code (DRY — Don't Repeat Yourself)
-#   • Break big problems into smaller pieces
-#   • Make code easier to read, test, and fix
+# Python makes this very easy with just one built-in function: open()
+# And two standard library modules: csv  and  json
+
+import csv
+import json
+
+# We will use simple, direct file paths in this file.
+# Since YOU create the folders, just make sure this script sits inside
+# filehandling_project/ and the paths below will work.
+
+def section(title):
+    print(f"\n{'=' * 55}")
+    print(f"  {title}")
+    print(f"{'=' * 55}")
+
+
+# =============================================================================
+# PART 1 — TEXT FILE HANDLING (.txt)
+# =============================================================================
 #
-# Python has 3 types of functions:
-#   1. Built-in functions   → print(), len(), type()  (already available)
-#   2. User-defined         → functions YOU write with 'def'
-#   3. Lambda functions     → small anonymous functions written in one line
+# WHAT IS A TEXT FILE?
+#   The simplest type of file. Stores plain readable text.
+#   Opens in Notepad, VS Code, any text editor.
+#   Each line inside the file ends with a hidden character called \n
+#   (newline). That's what tells the computer "start a new line here".
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# THE open() FUNCTION — the only thing you need to work with files
+# ─────────────────────────────────────────────────────────────────────────────
+#
+#   open("path/to/file",  "mode",  encoding="utf-8")
+#          ↑                ↑              ↑
+#     file location     what to do    handle special
+#                       with it       characters safely
+#
+# FILE MODES — the second argument tells Python what you want to do:
+#
+#   "r"  → READ       Open the file and READ it. File must already exist.
+#                     If file doesn't exist → FileNotFoundError crash.
+#
+#   "w"  → WRITE      Create a new file and WRITE into it.
+#                     ⚠️  If file already exists → it gets DELETED and recreated!
+#                     Use carefully.
+#
+#   "a"  → APPEND     Open file and ADD content at the END.
+#                     Does NOT delete existing content.
+#                     If file doesn't exist → creates a new one.
+#
+#   "x"  → CREATE     Create a brand new file.
+#                     If file already exists → gives an error (safe mode).
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# THE "with" STATEMENT — always use this when opening files
+# ─────────────────────────────────────────────────────────────────────────────
+#
+#   with open("file.txt", "r") as f:
+#       content = f.read()
+#
+#   WHY use "with"?
+#   When you open a file, Python "holds" it open (locks it).
+#   If your code crashes in the middle, the file stays locked — bad!
+#   "with" automatically CLOSES the file when you're done, no matter what.
+#   Think of it like this: "with" = try + finally + file.close() all in one.
+#
+#   The variable after "as" (we use 'f') is the file object.
+#   You call methods on it: f.read(), f.write(), etc.
 
 
 # =============================================================================
-# 1. DEFINING AND CALLING A FUNCTION
-# =============================================================================
-# Syntax:
-#   def function_name(parameters):
-#       """docstring — explains what the function does"""
-#       # code block
-#       return value   ← optional
-
-# ── Simplest function — no parameters, no return ─────────────────────────────
-def greet():
-    """Prints a simple greeting."""
-    print("Hello, World!")
-
-greet()   # Output: Hello, World!
-greet()   # call it again — same result
-greet()   # call it as many times as you like
-
-
-# ── Function with a parameter ────────────────────────────────────────────────
-def greet_user(name):
-    """Greets a specific user by name."""
-    print(f"Hello, {name}!")
-
-greet_user("Yash")       # Hello, Yash!
-greet_user("Prashant")   # Hello, Prashant!
-
-
-# ── Function with return value ────────────────────────────────────────────────
-def add(a, b):
-    """Returns the sum of two numbers."""
-    result = a + b
-    return result
-
-total = add(10, 5)
-print(total)         # 15
-print(add(3, 7))     # 10  — use the return value directly
-
-
-# =============================================================================
-# 2. PARAMETERS vs ARGUMENTS
-# =============================================================================
-# Parameter → the variable name in the function definition
-# Argument  → the actual value you pass when calling the function
-
-def introduce(name, age):      # name and age are PARAMETERS
-    print(f"I am {name}, {age} years old.")
-
-introduce("Yash", 20)          # "Yash" and 20 are ARGUMENTS
-introduce("Prashant", 22)
-
-
-# =============================================================================
-# 3. TYPES OF ARGUMENTS
+# 1A. READING a text file — 4 ways
 # =============================================================================
 
-# ── 3a. Positional arguments — order matters ──────────────────────────────────
-def student_info(name, age, city):
-    print(f"{name} | {age} | {city}")
+section("1A. READ — Reading a text file")
 
-student_info("Yash", 20, "Delhi")       # matches left to right
-# student_info("Delhi", "Yash", 20)    # ⚠️  order matters!
+# ── TINY EXAMPLE FIRST ───────────────────────────────────────────────────────
+# Imagine data/txt/intro.txt contains:
+#   Hello, this is a simple text file.
+#   Python makes reading and writing files very easy.
+#   This file has multiple lines.
+#   Each line can be read separately.
+#   End of file.
 
+# ─── WAY 1: f.read() — gets the WHOLE file as ONE big string ─────────────────
+# Use this when: you want everything at once, file is small.
+print("\n--- WAY 1: f.read() — entire file as one string ---")
 
-# ── 3b. Keyword arguments — order does NOT matter ─────────────────────────────
-student_info(city="Delhi", name="Yash", age=20)   # same result, any order
+with open("data/txt/intro.txt", "r", encoding="utf-8") as f:
+    content = f.read()      # reads EVERYTHING — one giant string
 
+print(content)
+# Output:
+# Hello, this is a simple text file.
+# Python makes reading and writing files very easy.
+# ...
 
-# ── 3c. Default arguments — used when no value is passed ─────────────────────
-def greet(name, message="Good morning"):   # message has a default value
-    print(f"{message}, {name}!")
-
-greet("Yash")                      # Good morning, Yash!
-greet("Prashant", "Good evening")  # Good evening, Prashant!
-
-# ⚠️  Default parameters must come AFTER non-default ones
-# def wrong(message="Hi", name):   # ❌ SyntaxError
-#     pass
-
-
-# ── 3d. *args — accept any number of positional arguments ────────────────────
-# *args collects all extra positional arguments into a TUPLE
-
-def add_all(*numbers):
-    """Add any number of values."""
-    print(numbers)        # it's a tuple
-    return sum(numbers)
-
-print(add_all(1, 2))             # 3
-print(add_all(1, 2, 3, 4, 5))   # 15
-print(add_all(10, 20, 30))       # 60
-
-def greet_all(*names):
-    for name in names:
-        print(f"Hello, {name}!")
-
-greet_all("Yash", "Prashant", "Rohit", "Aarav")
+print(f"Data type returned: {type(content)}")   # <class 'str'>
+print(f"Total characters : {len(content)}")
 
 
-# ── 3e. **kwargs — accept any number of keyword arguments ────────────────────
-# **kwargs collects all extra keyword arguments into a DICTIONARY
+# ─── WAY 2: f.readlines() — gets ALL lines as a LIST ────────────────────────
+# Use this when: you want to work with individual lines, small file.
+# Each item in the list = one line from the file (including the \n at the end).
+print("\n--- WAY 2: f.readlines() — all lines as a list ---")
 
-def print_info(**details):
-    """Print any number of key-value details."""
-    print(details)       # it's a dictionary
-    for key, value in details.items():
-        print(f"  {key}: {value}")
+with open("data/txt/intro.txt", "r", encoding="utf-8") as f:
+    lines = f.readlines()   # returns: ["line1\n", "line2\n", "line3\n", ...]
 
-print_info(name="Yash", age=20, city="Delhi", course="Python")
+print(lines)
+# Output: ['Hello, this is a simple text file.\n', 'Python makes....\n', ...]
 
-# Mix *args and **kwargs together
-def mixed(*args, **kwargs):
-    print("Positional:", args)
-    print("Keyword:   ", kwargs)
+print(f"Data type returned  : {type(lines)}")    # <class 'list'>
+print(f"Number of lines     : {len(lines)}")
+print(f"First line          : {lines[0].strip()}")   # .strip() removes the \n
+print(f"Last line           : {lines[-1].strip()}")
 
-mixed(1, 2, 3, name="Yash", age=20)
-# Positional: (1, 2, 3)
-# Keyword:    {'name': 'Yash', 'age': 20}
+
+# ─── WAY 3: f.readline() — reads ONE line at a time ──────────────────────────
+# Use this when: you want to process one line at a time manually.
+# Every call to readline() moves forward to the next line.
+print("\n--- WAY 3: f.readline() — one line at a time ---")
+
+with open("data/txt/intro.txt", "r", encoding="utf-8") as f:
+    first_line  = f.readline()   # reads line 1, cursor moves to line 2
+    second_line = f.readline()   # reads line 2, cursor moves to line 3
+    third_line  = f.readline()   # reads line 3
+
+print(f"Line 1 → {first_line.strip()}")
+print(f"Line 2 → {second_line.strip()}")
+print(f"Line 3 → {third_line.strip()}")
+
+
+# ─── WAY 4: Loop directly over the file (BEST PRACTICE for large files) ──────
+# Use this when: file is large (thousands of lines), you process line by line.
+# This does NOT load the whole file into memory at once — very efficient.
+# enumerate(f, start=1) gives you a line number alongside each line.
+print("\n--- WAY 4: Loop line by line (best for large files) ---")
+
+with open("data/txt/intro.txt", "r", encoding="utf-8") as f:
+    for line_number, line in enumerate(f, start=1):
+        clean_line = line.strip()    # remove \n from the end
+        print(f"  Line {line_number}: {clean_line}")
+
+# Output:
+#   Line 1: Hello, this is a simple text file.
+#   Line 2: Python makes reading and writing files very easy.
+#   ...
 
 
 # =============================================================================
-# 4. RETURN STATEMENT
+# 1B. WRITING to a text file
 # =============================================================================
 
-# ── Return a single value ─────────────────────────────────────────────────────
-def square(n):
-    return n ** 2
+section("1B. WRITE — Writing to a text file")
 
-print(square(5))    # 25
-print(square(9))    # 81
+# ─── TINY EXAMPLE: write a single line ───────────────────────────────────────
+# "w" mode creates the file if it doesn't exist.
+# ⚠️  If the file ALREADY EXISTS — "w" mode DELETES the old content first!
+print("\n--- Simple write: one line ---")
 
+with open("output/simple.txt", "w", encoding="utf-8") as f:
+    f.write("Hello from Python!\n")   # \n = go to next line
 
-# ── Return multiple values (actually returns a tuple) ─────────────────────────
-def min_max(numbers):
-    return min(numbers), max(numbers)
-
-low, high = min_max([3, 1, 8, 5, 2])
-print(low, high)   # 1 8
+print("Done! Check output/simple.txt")
 
 
-# ── Early return — exit the function before the end ──────────────────────────
-def divide(a, b):
-    if b == 0:
-        return "Error: cannot divide by zero"   # exits early
-    return a / b
+# ─── Write multiple lines one by one ─────────────────────────────────────────
+print("\n--- Write multiple lines using f.write() ---")
 
-print(divide(10, 2))    # 5.0
-print(divide(10, 0))    # Error: cannot divide by zero
+with open("output/my_output.txt", "w", encoding="utf-8") as f:
+    f.write("Line 1: This file was created by Python.\n")
+    f.write("Line 2: Writing is easy with Python.\n")
+    f.write("Line 3: File handling is very useful!\n")
 
+print("Written: output/my_output.txt")
 
-# ── Functions without return give back None ───────────────────────────────────
-def say_hi():
-    print("Hi!")
-
-result = say_hi()    # prints "Hi!"
-print(result)        # None
+# Read it back and confirm
+with open("output/my_output.txt", "r", encoding="utf-8") as f:
+    print(f.read())
 
 
-# =============================================================================
-# 5. SCOPE — where variables live
-# =============================================================================
-# Local scope  → variable created INSIDE a function (only visible inside)
-# Global scope → variable created OUTSIDE a function (visible everywhere)
+# ─── writelines() — write a LIST of lines all at once ────────────────────────
+# Note: writelines does NOT add \n automatically — you must include it yourself.
+print("\n--- writelines(): write from a list ---")
 
-name = "Yash"   # global variable
+my_lines = [
+    "First line from a list\n",
+    "Second line from a list\n",
+    "Third line from a list\n",
+]
 
-def show_name():
-    city = "Delhi"      # local variable — only exists inside this function
-    print(name)         # ✅ can READ a global variable
-    print(city)         # ✅ local variable visible here
+with open("output/list_output.txt", "w", encoding="utf-8") as f:
+    f.writelines(my_lines)   # writes all 3 lines at once
 
-show_name()
-print(name)    # ✅ global variable accessible here
-# print(city)  # ❌ NameError — city doesn't exist outside the function
+print("Written: output/list_output.txt")
 
-
-# ── global keyword — modify a global variable inside a function ───────────────
-counter = 0
-
-def increment():
-    global counter       # tell Python we mean the GLOBAL counter
-    counter += 1
-
-increment()
-increment()
-increment()
-print(counter)    # 3
-
-
-# ── Enclosing scope — function inside a function ──────────────────────────────
-def outer():
-    message = "Hello from outer"
-
-    def inner():
-        print(message)    # inner can access outer's variable
-
-    inner()
-
-outer()   # Hello from outer
+# Read it back
+with open("output/list_output.txt", "r", encoding="utf-8") as f:
+    print(f.read())
 
 
 # =============================================================================
-# 6. LAMBDA FUNCTIONS (anonymous functions)
+# 1C. APPEND — Adding to a file without deleting existing content
 # =============================================================================
-# A lambda is a small, one-line function without a name.
-# Syntax:  lambda parameters : expression
-# Used when you need a simple function for a short time.
 
-# Regular function
-def square(n):
-    return n ** 2
+section("1C. APPEND — Adding to an existing file")
 
-# Same thing as a lambda
-square_lambda = lambda n: n ** 2
+# ─── TINY EXAMPLE: what append looks like ────────────────────────────────────
+# "a" mode = ADD to the end. Never deletes existing content.
+# If the file doesn't exist yet — "a" creates it (like "w").
+print("\n--- Append mode demo ---")
 
-print(square(5))          # 25
-print(square_lambda(5))   # 25
+# Step 1: create the file with some initial content
+with open("output/log.txt", "w", encoding="utf-8") as f:
+    f.write("=== Application Log ===\n")
+    f.write("Log started.\n")
 
-# Lambda with two parameters
-add = lambda a, b: a + b
-print(add(3, 7))    # 10
+print("Initial file created.")
 
-# Lambda inside sorted() — sort by the second item in each tuple
-students = [("Yash", 95), ("Prashant", 88), ("Rohit", 76), ("Aarav", 91)]
-students.sort(key=lambda s: s[1])   # sort by score
-print(students)   # sorted by score ascending
+# Step 2: append more lines later (imagine this runs later in the day)
+with open("output/log.txt", "a", encoding="utf-8") as f:
+    f.write("Entry: User logged in.\n")
+    f.write("Entry: File uploaded successfully.\n")
 
-students.sort(key=lambda s: s[1], reverse=True)  # highest first
-print(students)
+print("Two entries appended.")
 
-# Lambda inside map()
-numbers = [1, 2, 3, 4, 5]
-doubled = list(map(lambda x: x * 2, numbers))
-print(doubled)    # [2, 4, 6, 8, 10]
+# Step 3: append even more later
+with open("output/log.txt", "a", encoding="utf-8") as f:
+    f.write("Entry: User logged out.\n")
 
-# Lambda inside filter()
-evens = list(filter(lambda x: x % 2 == 0, numbers))
-print(evens)      # [2, 4]
+print("One more entry appended.")
 
+# Read the final file — you will see ALL entries, nothing was deleted
+with open("output/log.txt", "r", encoding="utf-8") as f:
+    print("\nFinal log.txt content:")
+    print(f.read())
 
-# =============================================================================
-# 7. DOCSTRINGS — documenting your functions
-# =============================================================================
-# A docstring is a string written right after the def line.
-# It explains what the function does, its parameters, and its return value.
-# Access it with  function.__doc__  or  help(function)
-
-def calculate_area(length, width):
-    """
-    Calculate the area of a rectangle.
-
-    Parameters:
-        length (float) : the length of the rectangle
-        width  (float) : the width of the rectangle
-
-    Returns:
-        float : area of the rectangle
-    """
-    return length * width
-
-print(calculate_area(5, 3))            # 15
-print(calculate_area.__doc__)          # prints the docstring
-# help(calculate_area)                 # formatted version in terminal
+# Output:
+# === Application Log ===
+# Log started.
+# Entry: User logged in.
+# Entry: File uploaded successfully.
+# Entry: User logged out.
 
 
 # =============================================================================
-# 8. RECURSION — a function that calls itself
+# 1D. USEFUL TEXT FILE OPERATIONS
 # =============================================================================
-# Recursion solves a problem by breaking it into smaller versions of itself.
-# Always needs a BASE CASE to stop (otherwise infinite loop → RecursionError).
 
-# ── Factorial using recursion ──────────────────────────────────────────────────
-# 5! = 5 × 4 × 3 × 2 × 1 = 120
+section("1D. Useful Text File Operations")
 
-def factorial(n):
-    """Return n! (factorial of n)."""
-    if n == 0 or n == 1:    # base case — stop here
-        return 1
-    return n * factorial(n - 1)   # recursive call
+# ─── Count lines, words, and characters ──────────────────────────────────────
+print("\n--- Count: lines, words, characters in a file ---")
 
-print(factorial(5))    # 120
-print(factorial(0))    # 1
-print(factorial(10))   # 3628800
+with open("data/txt/intro.txt", "r", encoding="utf-8") as f:
+    content = f.read()
+
+# splitlines() splits by \n and gives a clean list (no \n in each item)
+all_lines = content.splitlines()
+
+# split() splits by any whitespace (spaces, tabs, newlines) — gives words
+all_words = content.split()
+
+print(f"Lines      : {len(all_lines)}")
+print(f"Words      : {len(all_words)}")
+print(f"Characters : {len(content)}")
 
 
-# ── Fibonacci using recursion ──────────────────────────────────────────────────
-# 0, 1, 1, 2, 3, 5, 8, 13, 21, ...
+# ─── Search for a keyword ─────────────────────────────────────────────────────
+# Open the file, go through each line, check if keyword is in that line.
+# .lower() on both sides = case-insensitive search (Python == python == PYTHON)
+print("\n--- Search: find which lines contain a keyword ---")
 
-def fibonacci(n):
-    """Return the nth Fibonacci number."""
-    if n <= 1:
-        return n
-    return fibonacci(n - 1) + fibonacci(n - 2)
+keyword = "Python"
 
-for i in range(10):
-    print(fibonacci(i), end=" ")   # 0 1 1 2 3 5 8 13 21 34
+with open("data/txt/intro.txt", "r", encoding="utf-8") as f:
+    for i, line in enumerate(f, start=1):
+        if keyword.lower() in line.lower():
+            print(f"  Found '{keyword}' on line {i}: {line.strip()}")
+
+
+# ─── Find and Replace ────────────────────────────────────────────────────────
+# Python's str.replace() method swaps every occurrence of a word.
+# Steps: Read → Replace in memory (string) → Write back to new file.
+print("\n--- Find and Replace ---")
+
+with open("data/txt/intro.txt", "r", encoding="utf-8") as f:
+    content = f.read()                              # step 1: read
+
+modified = content.replace("Python", "🐍 Python")  # step 2: replace in memory
+
+with open("output/modified_intro.txt", "w", encoding="utf-8") as f:
+    f.write(modified)                               # step 3: write to new file
+
+print("Saved to output/modified_intro.txt")
+
+# Quick verify
+with open("output/modified_intro.txt", "r", encoding="utf-8") as f:
+    print(f.read())
+
+
+# ─── Read a specific line number ─────────────────────────────────────────────
+# readlines() gives a list. Index [2] = line 3 (lists start from 0).
+print("\n--- Read only line number 3 ---")
+
+with open("data/txt/intro.txt", "r", encoding="utf-8") as f:
+    all_lines = f.readlines()
+
+print(f"Line 3: {all_lines[2].strip()}")   # index 2 = 3rd line
+
+
+# ─── Read poem.txt and notes.txt just for practice ───────────────────────────
+print("\n--- Reading poem.txt ---")
+with open("data/txt/poem.txt", "r", encoding="utf-8") as f:
+    print(f.read())
+
+print("\n--- Reading notes.txt ---")
+with open("data/txt/notes.txt", "r", encoding="utf-8") as f:
+    for line in f:
+        print(" ", line.strip())
+
+
+# =============================================================================
+# PART 2 — CSV FILE HANDLING (.csv)
+# =============================================================================
+#
+# WHAT IS A CSV FILE?
+#   CSV = Comma-Separated Values.
+#   It's basically a spreadsheet (like Excel) stored as plain text.
+#   Open it in Notepad and you'll see rows of data separated by commas:
+#
+#     name,age,marks,grade       ← this is the header row (column names)
+#     Yash,20,92,A+              ← this is a data row
+#     Prashant,21,78,A
+#     Rohit,19,55,C
+#
+# WHY use Python's csv MODULE instead of reading manually?
+#   You might think: "I'll just split each line by comma!"
+#   Problem: what if a value itself contains a comma?
+#     e.g.  "Smith, John",25,90,A+
+#   Splitting by comma would break "Smith, John" into two pieces.
+#   The csv module handles ALL edge cases correctly and safely.
+#
+# The 4 things you use:
+#   csv.reader     → read a CSV → each row comes back as a LIST
+#   csv.DictReader → read a CSV → each row comes back as a DICT (column name → value)
+#   csv.writer     → write a CSV from LISTS
+#   csv.DictWriter → write a CSV from DICTS
+#
+# IMPORTANT: Always use  newline=""  when opening CSV files.
+#   Without it, on Windows you get extra blank lines between every row.
+#   This is a CSV-specific rule — you don't need it for txt or json files.
+
+
+# =============================================================================
+# 2A. READ CSV — Using csv.reader (rows as lists)
+# =============================================================================
+
+section("2A. CSV READ — csv.reader (rows as lists)")
+
+# TINY EXAMPLE first:
+# Imagine students.csv looks like:
+#   name,age,marks,grade
+#   Yash,20,92,A+
+#   Prashant,21,78,A
+
+print("\n--- csv.reader: simplest read ---")
+
+with open("data/csv/students.csv", "r", newline="", encoding="utf-8") as f:
+    reader = csv.reader(f)       # csv.reader wraps the file object
+
+    # The FIRST row is the header (column names). We skip it with next().
+    # next() reads one row and moves forward — so the loop starts from row 2.
+    header = next(reader)
+    print(f"Header (column names): {header}")
+    # Output: ['name', 'age', 'marks', 'grade']
+
+    print()
+    for row in reader:
+        # row = ['Yash', '20', '92', 'A+']  — a plain Python list
+        # IMPORTANT: ALL values are STRINGS even if they look like numbers!
+        # You must convert manually: int(row[2]) to get marks as a number.
+        print(f"  Row as list : {row}")
+
 print()
 
+# Now use the values properly
+with open("data/csv/students.csv", "r", newline="", encoding="utf-8") as f:
+    reader = csv.reader(f)
+    next(reader)   # skip header
 
-# =============================================================================
-# 9. HIGHER-ORDER FUNCTIONS
-# =============================================================================
-# A higher-order function is one that:
-#   • Takes another function as a parameter, OR
-#   • Returns a function as its result
-
-# ── Passing a function as an argument ────────────────────────────────────────
-def apply(func, value):
-    """Apply any function to a value."""
-    return func(value)
-
-def double(x):  return x * 2
-def triple(x):  return x * 3
-
-print(apply(double, 5))    # 10
-print(apply(triple, 5))    # 15
-print(apply(str, 42))      # "42"  — even built-ins work
-
-
-# ── Returning a function from a function ──────────────────────────────────────
-def multiplier(factor):
-    """Returns a function that multiplies by factor."""
-    def multiply(number):
-        return number * factor
-    return multiply
-
-double = multiplier(2)
-triple = multiplier(3)
-
-print(double(5))    # 10
-print(triple(5))    # 15
-print(double(9))    # 18
+    for row in reader:
+        name  = row[0]          # index 0 = name   (string)
+        age   = int(row[1])     # index 1 = age    (convert to int!)
+        marks = int(row[2])     # index 2 = marks  (convert to int!)
+        grade = row[3]          # index 3 = grade  (string)
+        print(f"  {name:<12} | Age: {age} | Marks: {marks} | Grade: {grade}")
 
 
 # =============================================================================
-# 10. USEFUL BUILT-IN HIGHER-ORDER FUNCTIONS
+# 2B. READ CSV — Using csv.DictReader (rows as dicts) ← EASIER & RECOMMENDED
 # =============================================================================
 
-numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+section("2B. CSV READ — csv.DictReader (rows as dicts)")
 
-# map() — apply a function to every item
-squares = list(map(lambda x: x**2, numbers))
-print(squares)   # [1, 4, 9, 16, 25, 36, 49, 64, 81, 100]
+# DictReader is smarter than reader:
+# - It reads the first row as keys (column names) automatically
+# - Every row after that becomes a DICTIONARY: {column_name: value}
+# - You access values by NAME not by index — much more readable!
+#
+# With csv.reader :  row[2]         ← what is index 2? you have to remember
+# With DictReader :  row["marks"]   ← crystal clear, always correct
 
-# filter() — keep items where function returns True
-evens   = list(filter(lambda x: x % 2 == 0, numbers))
-print(evens)     # [2, 4, 6, 8, 10]
+print("\n--- csv.DictReader: each row is a dictionary ---")
 
-# sorted() with a key function
-words = ["banana", "apple", "cherry", "date", "fig"]
-print(sorted(words))              # alphabetical
-print(sorted(words, key=len))     # by length
-print(sorted(words, key=lambda w: w[-1]))  # by last character
+with open("data/csv/students.csv", "r", newline="", encoding="utf-8") as f:
+    reader = csv.DictReader(f)   # no need to skip header — DictReader handles it
+
+    for row in reader:
+        # row = {'name': 'Yash', 'age': '20', 'marks': '92', 'grade': 'A+'}
+        print(f"  Row as dict : {dict(row)}")
+
+print()
+
+with open("data/csv/students.csv", "r", newline="", encoding="utf-8") as f:
+    reader = csv.DictReader(f)
+
+    for row in reader:
+        name  = row["name"]
+        marks = int(row["marks"])    # still need to convert strings to ints
+        grade = row["grade"]
+        print(f"  {name:<12} scored {marks:>3} marks → Grade: {grade}")
 
 
 # =============================================================================
-# QUICK REFERENCE TABLE
+# 2C. CSV — Data Operations (filter, sort, average)
+# =============================================================================
+
+section("2C. CSV — Filter, Sort, Average")
+
+# Step 1: Load all rows into a list of dicts
+# (so we can work with the data after closing the file)
+students = []
+
+with open("data/csv/students.csv", "r", newline="", encoding="utf-8") as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        students.append({
+            "name":  row["name"],
+            "age":   int(row["age"]),
+            "marks": int(row["marks"]),
+            "grade": row["grade"]
+        })
+
+print(f"\nLoaded {len(students)} students into a list of dicts.")
+
+# ── Filter: only students who passed (marks >= 60) ───────────────────────────
+print("\n--- Filter: students who passed (marks >= 60) ---")
+passed = [s for s in students if s["marks"] >= 60]
+for s in passed:
+    print(f"  ✅ {s['name']:<12} — {s['marks']} marks")
+
+# ── Filter: only students who failed ─────────────────────────────────────────
+failed = [s for s in students if s["marks"] < 60]
+print(f"\n--- Students who failed ---")
+for s in failed:
+    print(f"  ❌ {s['name']:<12} — {s['marks']} marks")
+
+# ── Sort: highest marks first ────────────────────────────────────────────────
+print("\n--- Sorted by marks (highest first) ---")
+sorted_students = sorted(students, key=lambda s: s["marks"], reverse=True)
+for rank, s in enumerate(sorted_students, start=1):
+    print(f"  Rank {rank}: {s['name']:<12} — {s['marks']}")
+
+# ── Average marks ─────────────────────────────────────────────────────────────
+total = sum(s["marks"] for s in students)
+average = total / len(students)
+print(f"\n--- Class Statistics ---")
+print(f"  Total students : {len(students)}")
+print(f"  Average marks  : {average:.1f}")
+print(f"  Highest marks  : {sorted_students[0]['marks']} ({sorted_students[0]['name']})")
+print(f"  Lowest  marks  : {sorted_students[-1]['marks']} ({sorted_students[-1]['name']})")
+
+
+# =============================================================================
+# 2D. WRITE CSV — csv.writer (write from lists)
+# =============================================================================
+
+section("2D. CSV WRITE — csv.writer (write lists)")
+
+# TINY EXAMPLE first: write 3 rows
+print("\n--- Simplest csv write: 3 rows ---")
+
+with open("output/simple_students.csv", "w", newline="", encoding="utf-8") as f:
+    writer = csv.writer(f)
+    writer.writerow(["name", "marks"])    # header row
+    writer.writerow(["Yash", 92])         # data row 1
+    writer.writerow(["Rohit", 55])        # data row 2
+
+print("Written: output/simple_students.csv")
+
+# Read it back to verify
+with open("output/simple_students.csv", "r", newline="", encoding="utf-8") as f:
+    print(f.read())
+
+
+# Write many rows at once using writerows() with a list of lists
+print("\n--- writerows(): write all rows at once ---")
+
+all_students = [
+    ["name", "age", "marks", "grade"],   # header
+    ["Vikram", 23, 95, "A+"],
+    ["Sneha",  21, 72, "A"],
+    ["Arjun",  20, 48, "C"],
+    ["Divya",  22, 85, "A"],
+]
+
+with open("output/new_students.csv", "w", newline="", encoding="utf-8") as f:
+    writer = csv.writer(f)
+    writer.writerows(all_students)   # write the entire list in one call
+
+print("Written: output/new_students.csv")
+
+
+# =============================================================================
+# 2E. WRITE CSV — csv.DictWriter (write from dicts) ← RECOMMENDED
+# =============================================================================
+
+section("2E. CSV WRITE — csv.DictWriter (write dicts)")
+
+# DictWriter is cleaner when your data is already in dict format.
+# You define fieldnames (column order), then write each dict as a row.
+# writeheader() automatically writes the column names as the first row.
+
+print("\n--- csv.DictWriter: write from a list of dicts ---")
+
+employees = [
+    {"name": "Yash",     "department": "Tech",    "salary": 60000},
+    {"name": "Prashant", "department": "HR",       "salary": 45000},
+    {"name": "Rohit",    "department": "Finance",  "salary": 52000},
+]
+
+fields = ["name", "department", "salary"]   # defines the column order
+
+with open("output/employees.csv", "w", newline="", encoding="utf-8") as f:
+    writer = csv.DictWriter(f, fieldnames=fields)
+    writer.writeheader()       # writes: name,department,salary
+    writer.writerows(employees)  # writes all 3 employee rows
+
+print("Written: output/employees.csv")
+
+# Verify
+with open("output/employees.csv", "r", newline="", encoding="utf-8") as f:
+    print(f.read())
+
+
+# =============================================================================
+# 2F. APPEND a new row to an existing CSV
+# =============================================================================
+
+section("2F. CSV APPEND — Add a row without deleting existing data")
+
+# Same trick as txt files: use "a" (append) mode.
+# The new row gets added at the BOTTOM of the file.
+print("\n--- Append one new student to students.csv ---")
+
+new_student = ["Kiran", 21, 81, "A"]
+
+with open("data/csv/students.csv", "a", newline="", encoding="utf-8") as f:
+    writer = csv.writer(f)
+    writer.writerow(new_student)   # adds one row at the end
+
+print("Kiran appended to students.csv!")
+
+# Verify: count rows
+with open("data/csv/students.csv", "r", newline="", encoding="utf-8") as f:
+    all_rows = list(csv.DictReader(f))
+print(f"Total students now: {len(all_rows)}")
+
+
+# =============================================================================
+# 2G. READ the products.csv file (extra practice)
+# =============================================================================
+
+section("2G. CSV EXTRA PRACTICE — Read products.csv")
+
+print("\n--- Products inventory ---")
+
+with open("data/csv/products.csv", "r", newline="", encoding="utf-8") as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        name  = row["product"]
+        price = int(row["price"])
+        stock = int(row["stock"])
+        print(f"  {name:<15} | Price: ₹{price:>6} | Stock: {stock} units")
+
+
+# =============================================================================
+# PART 3 — JSON FILE HANDLING (.json)
 # =============================================================================
 #
-#  Concept               Syntax                       Notes
-#  ──────────────────    ─────────────────────────    ──────────────────────────
-#  Define function       def name(params):            Ends with colon
-#  Call function         name(arguments)
-#  Return value          return expression            Exits the function
-#  No return             (omit return)                Returns None implicitly
-#  Positional args       f(1, 2, 3)                   Order matters
-#  Keyword args          f(a=1, b=2)                  Order doesn't matter
-#  Default args          def f(x, y=10):              y is optional
-#  Variable positional   def f(*args):                Collects as tuple
-#  Variable keyword      def f(**kwargs):             Collects as dict
-#  Lambda                lambda x: x * 2             One-line function
-#  Docstring             """description"""            First line after def
-#  Recursion             def f(n): return f(n-1)      Needs a base case
-#  Global variable       global var_name              Modify global inside fn
-#  Nested function       def outer(): def inner():    inner() only in outer
+# WHAT IS JSON?
+#   JSON = JavaScript Object Notation.
+#   It's the most popular format for storing structured data on the internet.
+#   Every modern API (weather, maps, payments) sends data as JSON.
+#
+#   JSON looks almost exactly like Python — that's why it's so easy to use!
+#
+#   JSON format   ←→   Python equivalent
+#   ─────────────────────────────────────
+#   { }           ←→   dict   {}
+#   [ ]           ←→   list   []
+#   "hello"       ←→   str    "hello"
+#   42            ←→   int    42
+#   3.14          ←→   float  3.14
+#   true / false  ←→   True / False
+#   null          ←→   None
+#
+# Example JSON file (student.json):
+#   {
+#       "name": "Yash",
+#       "age": 20,
+#       "marks": { "Python": 92, "Maths": 88 },
+#       "passed": true
+#   }
+#
+# The 4 json functions (easy to remember):
+#
+#   READING:
+#   json.load(file)      → read JSON from a FILE       → gives Python dict/list
+#   json.loads(string)   → read JSON from a STRING     → gives Python dict/list
+#     ("loads" = load from String)
+#
+#   WRITING:
+#   json.dump(data, file) → write Python data to a FILE as JSON
+#   json.dumps(data)      → convert Python data to a JSON STRING (no file)
+#     ("dumps" = dump to String)
 
 
 # =============================================================================
-# PRACTICE QUESTIONS
+# 3A. READ JSON — Load a single object (dict)
 # =============================================================================
 
-# Q1. Write a function that takes a name and age, and prints:
-#     "Hi, I am Yash and I am 20 years old."
-# ------ Solution ------
-def introduce(name, age):
-    print(f"Hi, I am {name} and I am {age} years old.")
+section("3A. JSON READ — Load a single student object")
 
-introduce("Yash", 20)
+# student.json contains one student as a JSON object (dict).
 
+print("\n--- json.load(): read JSON file → Python dict ---")
 
-# Q2. Write a function that returns the largest of three numbers.
-# ------ Solution ------
-def largest(a, b, c):
-    return max(a, b, c)
+with open("data/json/student.json", "r", encoding="utf-8") as f:
+    student = json.load(f)   # parses the JSON text → Python dict
 
-print(largest(10, 45, 30))   # 45
+# Now 'student' is a normal Python dictionary — use it like any dict!
+print(f"Type returned: {type(student)}")   # <class 'dict'>
+print()
+print(f"Name   : {student['name']}")
+print(f"Age    : {student['age']}")
+print(f"Course : {student['course']}")
+print(f"Passed : {student['passed']}")
 
+# Accessing NESTED data (dict inside a dict)
+# student["marks"] is itself a dict: {"Python": 92, "Maths": 88, "English": 79}
+print(f"\nPython marks : {student['marks']['Python']}")
+print(f"Maths  marks : {student['marks']['Maths']}")
 
-# Q3. Write a function using *args that returns the average of any numbers.
-# ------ Solution ------
-def average(*nums):
-    return sum(nums) / len(nums)
-
-print(average(10, 20, 30))         # 20.0
-print(average(5, 15, 25, 35, 45))  # 25.0
-
-
-# Q4. Write a function using **kwargs that prints a student's profile.
-# ------ Solution ------
-def print_profile(**info):
-    for key, value in info.items():
-        print(f"  {key.capitalize()}: {value}")
-
-print_profile(name="Yash", age=20, city="Delhi", grade="A")
+# Loop through nested marks dict
+print("\nAll subject marks:")
+for subject, score in student["marks"].items():
+    print(f"  {subject:<12}: {score}")
 
 
-# Q5. Write a lambda to check if a number is even. Use it with filter()
-#     to get all even numbers from 1 to 20.
-# ------ Solution ------
-is_even = lambda x: x % 2 == 0
-evens   = list(filter(is_even, range(1, 21)))
-print(evens)
+# =============================================================================
+# 3B. READ JSON — Load a list of objects
+# =============================================================================
+
+section("3B. JSON READ — Load a list of students")
+
+# students_list.json contains a JSON array (list of dicts).
+# [
+#     {"name": "Yash",     "age": 20, "marks": 92},
+#     {"name": "Prashant", "age": 21, "marks": 78},
+#     ...
+# ]
+
+print("\n--- json.load(): read JSON array → Python list ---")
+
+with open("data/json/students_list.json", "r", encoding="utf-8") as f:
+    students = json.load(f)   # returns a Python LIST of dicts
+
+print(f"Type returned     : {type(students)}")   # <class 'list'>
+print(f"Number of students: {len(students)}")
+print()
+
+for s in students:
+    print(f"  {s['name']:<12} | Age: {s['age']} | Marks: {s['marks']}")
 
 
-# Q6. Write a recursive function to calculate the sum of digits of a number.
-#     e.g. sum_digits(1234) → 10
-# ------ Solution ------
-def sum_digits(n):
-    if n == 0:
-        return 0
-    return n % 10 + sum_digits(n // 10)
+# =============================================================================
+# 3C. READ JSON — Config file (nested dict)
+# =============================================================================
 
-print(sum_digits(1234))    # 10
-print(sum_digits(9999))    # 36
+section("3C. JSON READ — Config file with nested data")
 
+print("\n--- Reading a nested config.json ---")
 
-# Q7. Write a function power(base, exp=2) where exp defaults to 2.
-#     Test: power(3) → 9,  power(3, 3) → 27
-# ------ Solution ------
-def power(base, exp=2):
-    return base ** exp
+with open("data/json/config.json", "r", encoding="utf-8") as f:
+    config = json.load(f)
 
-print(power(3))      # 9
-print(power(3, 3))   # 27
-print(power(2, 10))  # 1024
+# Top-level keys
+print(f"App Name : {config['app_name']}")
+print(f"Version  : {config['version']}")
+print(f"Debug    : {config['debug']}")
 
+# Nested key: config["database"] is itself a dict
+print(f"DB Host  : {config['database']['host']}")
+print(f"DB Port  : {config['database']['port']}")
+print(f"DB Name  : {config['database']['name']}")
 
-# Q8. Write a higher-order function apply_twice(func, value) that applies
-#     a function to a value TWICE.
-#     e.g. apply_twice(double, 3) → 12  (double(double(3)) = double(6) = 12)
-# ------ Solution ------
-def apply_twice(func, value):
-    return func(func(value))
-
-double = lambda x: x * 2
-print(apply_twice(double, 3))    # 12
-print(apply_twice(double, 5))    # 20
+# Nested list
+print(f"Grades   : {config['allowed_grades']}")
+for grade in config["allowed_grades"]:
+    print(f"  → {grade}")
 
 
-# Q9. Write a function that takes a list of names and returns only those
-#     names longer than 4 characters using filter() and lambda.
-# ------ Solution ------
-def long_names(names):
-    return list(filter(lambda n: len(n) > 4, names))
+# =============================================================================
+# 3D. WRITE JSON — Save Python data to a JSON file
+# =============================================================================
 
-print(long_names(["Yash", "Prashant", "Rohit", "Aarav", "Meera", "Jo"]))
-# ['Prashant', 'Rohit', 'Aarav', 'Meera']
+section("3D. JSON WRITE — Save Python dict to JSON file")
+
+# TINY EXAMPLE first: save a simple dict as JSON
+print("\n--- Simplest json write ---")
+
+person = {"name": "Yash", "age": 20, "city": "Delhi"}
+
+with open("output/simple_person.json", "w", encoding="utf-8") as f:
+    json.dump(person, f)    # writes: {"name": "Yash", "age": 20, "city": "Delhi"}
+
+print("Written: output/simple_person.json")
+
+# Better: use indent=4 for human-readable formatting
+print("\n--- json.dump() with indent=4 for pretty format ---")
+
+new_student = {
+    "name": "Anjali",
+    "age": 22,
+    "course": "Python",
+    "marks": {
+        "Python":  88,
+        "Maths":   91,
+        "English": 76
+    },
+    "passed": True
+}
+
+with open("output/new_student.json", "w", encoding="utf-8") as f:
+    json.dump(new_student, f, indent=4, ensure_ascii=False)
+    # indent=4       → adds 4-space indentation (makes it easy to read)
+    # ensure_ascii=False → allows ₹, é, हिंदी and other special characters
+
+print("Written: output/new_student.json")
+
+# Read it back to see the pretty format
+with open("output/new_student.json", "r", encoding="utf-8") as f:
+    print(f.read())
 
 
-# Q10. Write a function make_greeting(greeting) that returns a personalised
-#      greeting function. Use it to make say_hello and say_hi.
-# ------ Solution ------
-def make_greeting(greeting):
-    def greet(name):
-        print(f"{greeting}, {name}!")
-    return greet
+# Write a LIST of dicts to JSON
+print("\n--- json.dump(): write a list of employees ---")
 
-say_hello = make_greeting("Hello")
-say_hi    = make_greeting("Hi there")
+employees = [
+    {"name": "Yash",     "role": "Developer", "salary": 60000},
+    {"name": "Prashant", "role": "Designer",  "salary": 55000},
+    {"name": "Rohit",    "role": "Manager",   "salary": 75000},
+]
 
-say_hello("Yash")       # Hello, Yash!
-say_hi("Prashant")      # Hi there, Prashant!
+with open("output/employees.json", "w", encoding="utf-8") as f:
+    json.dump(employees, f, indent=4, ensure_ascii=False)
+
+print("Written: output/employees.json")
+
+
+# =============================================================================
+# 3E. UPDATE JSON — Read → Modify → Write back
+# =============================================================================
+
+section("3E. JSON UPDATE — Read, change a value, write back")
+
+# JSON has NO "append" or "update" mode.
+# To change anything: READ the whole file → MODIFY in Python → WRITE it back.
+# This is the standard pattern used everywhere.
+
+print("\n--- Update: read → modify → write ---")
+
+with open("data/json/student.json", "r", encoding="utf-8") as f:
+    data = json.load(f)
+
+print(f"Before: age={data['age']}, Python marks={data['marks']['Python']}")
+
+# Modify values in the Python dict (the file is not touched yet)
+data["age"] = 21                    # change an existing value
+data["marks"]["Python"] = 95        # change a nested value
+data["city"] = "Mumbai"             # add a brand new key
+
+# Now write the modified dict back to a new file
+with open("output/updated_student.json", "w", encoding="utf-8") as f:
+    json.dump(data, f, indent=4)
+
+print(f"After : age={data['age']}, Python marks={data['marks']['Python']}, city={data['city']}")
+print("Saved to output/updated_student.json")
+
+
+# =============================================================================
+# 3F. APPEND to a JSON list — Add a new item to a list stored in JSON
+# =============================================================================
+
+section("3F. JSON APPEND — Add a new student to the list")
+
+print("\n--- Read list → append in Python → write back ---")
+
+with open("data/json/students_list.json", "r", encoding="utf-8") as f:
+    students = json.load(f)   # students is a Python list
+
+print(f"Before: {len(students)} students")
+
+# Append the new student to the Python list
+students.append({"name": "Meena", "age": 20, "marks": 85})
+
+# Write the updated list back
+with open("output/updated_students_list.json", "w", encoding="utf-8") as f:
+    json.dump(students, f, indent=4)
+
+print(f"After : {len(students)} students")
+print("Saved to output/updated_students_list.json")
+
+
+# =============================================================================
+# 3G. json.dumps() and json.loads() — work with JSON as a STRING
+# =============================================================================
+
+section("3G. json.dumps() and json.loads() — JSON as string")
+
+# json.dumps() — convert Python dict/list to a JSON STRING (no file involved)
+# Useful when you want to: print it, send it over a network, store in a database.
+print("\n--- json.dumps(): Python dict → JSON string ---")
+
+person = {"name": "Yash", "age": 20, "passed": True}
+json_string = json.dumps(person, indent=2)
+
+print(json_string)
+print(f"Type: {type(json_string)}")    # <class 'str'>  ← it's just a string!
+
+
+# json.loads() — convert a JSON STRING back to Python dict/list
+# Useful when an API gives you a JSON string and you want to work with it.
+print("\n--- json.loads(): JSON string → Python dict ---")
+
+back_to_python = json.loads(json_string)
+
+print(back_to_python)
+print(f"Type: {type(back_to_python)}")   # <class 'dict'>  ← back to dict!
+print(f"Name: {back_to_python['name']}")  # access like a normal dict
+
+
+# =============================================================================
+# PART 4 — SAFE FILE READING WITH ERROR HANDLING
+# =============================================================================
+#
+# What happens if the file doesn't exist when you try to read it?
+# Python crashes with:  FileNotFoundError: [Errno 2] No such file or directory
+#
+# In real programs, you should ALWAYS handle this gracefully.
+# Wrap file operations in try-except so your program doesn't crash.
+
+section("4. SAFE FILE READING — Error Handling")
+
+# ─── Without error handling — BAD (crashes your program) ─────────────────────
+# with open("data/txt/missing.txt", "r") as f:    # ❌ FileNotFoundError crash!
+#     print(f.read())
+
+# ─── With error handling — GOOD ───────────────────────────────────────────────
+print("\n--- Always wrap file reading in try-except ---")
+
+# EXAMPLE 1: read a file that exists
+try:
+    with open("data/txt/poem.txt", "r", encoding="utf-8") as f:
+        content = f.read()
+    print("poem.txt content:")
+    print(content)
+except FileNotFoundError:
+    print("Error: poem.txt not found!")
+
+# EXAMPLE 2: read a file that does NOT exist — handled gracefully
+try:
+    with open("data/txt/missing.txt", "r", encoding="utf-8") as f:
+        content = f.read()
+    print(content)
+except FileNotFoundError:
+    print("Error: missing.txt was not found. Skipping.")
+
+print("Program continues normally after the error!")   # does not crash
+
+
+# ─── Handle multiple error types ──────────────────────────────────────────────
+print("\n--- Handle multiple errors ---")
+
+filename = "data/txt/intro.txt"
+
+try:
+    with open(filename, "r", encoding="utf-8") as f:
+        print(f.read())
+except FileNotFoundError:
+    print(f"File not found: {filename}")
+except PermissionError:
+    print(f"No permission to read: {filename}")
+except Exception as e:
+    # 'Exception' catches any other unexpected error
+    print(f"Unexpected error: {e}")
+else:
+    # 'else' runs only when NO exception occurred
+    print("File read successfully!")
+
+
+# =============================================================================
+# PART 5 — REAL-WORLD MINI PROJECT: Student Report Generator
+# =============================================================================
+# Combines everything:
+#   ✅ Read students from CSV
+#   ✅ Read app settings from JSON config
+#   ✅ Compute stats (average, topper, pass/fail)
+#   ✅ Write a formatted .txt report
+#   ✅ Save a summary as JSON
+#   ✅ Handle errors safely
+
+section("5. MINI PROJECT — Student Report Generator")
+
+print("\n--- Step 1: Load config from JSON ---")
+
+try:
+    with open("data/json/config.json", "r", encoding="utf-8") as f:
+        config = json.load(f)
+    print(f"App: {config['app_name']}  |  Version: {config['version']}")
+except FileNotFoundError:
+    print("config.json missing! Using defaults.")
+    config = {"app_name": "Student App", "version": "1.0"}
+
+print("\n--- Step 2: Read students from CSV ---")
+
+students = []
+try:
+    with open("data/csv/students.csv", "r", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            students.append({
+                "name":  row["name"],
+                "age":   int(row["age"]),
+                "marks": int(row["marks"]),
+                "grade": row["grade"]
+            })
+    print(f"Loaded {len(students)} students from CSV.")
+except FileNotFoundError:
+    print("students.csv not found!")
+
+if students:
+    # Compute stats
+    avg    = sum(s["marks"] for s in students) / len(students)
+    topper = max(students, key=lambda s: s["marks"])
+    passed = [s for s in students if s["marks"] >= 60]
+    failed = [s for s in students if s["marks"] <  60]
+    ranked = sorted(students, key=lambda s: s["marks"], reverse=True)
+
+    print("\n--- Step 3: Write formatted TXT report ---")
+
+    with open("output/student_report.txt", "w", encoding="utf-8") as f:
+        f.write("=" * 42 + "\n")
+        f.write(f"  {config['app_name']} — Student Report\n")
+        f.write("=" * 42 + "\n\n")
+        f.write(f"Total Students : {len(students)}\n")
+        f.write(f"Average Marks  : {avg:.1f}\n")
+        f.write(f"Topper         : {topper['name']} ({topper['marks']})\n")
+        f.write(f"Passed         : {len(passed)}\n")
+        f.write(f"Failed         : {len(failed)}\n\n")
+        f.write("Individual Results:\n")
+        f.write("-" * 42 + "\n")
+        for rank, s in enumerate(ranked, 1):
+            status = "PASS" if s["marks"] >= 60 else "FAIL"
+            f.write(f"  {rank}. {s['name']:<12} {s['marks']:>4}  {s['grade']:<3}  {status}\n")
+
+    print("Saved: output/student_report.txt")
+
+    print("\n--- Step 4: Save JSON summary ---")
+
+    summary = {
+        "app":     config["app_name"],
+        "total":   len(students),
+        "average": round(avg, 1),
+        "topper":  topper["name"],
+        "passed":  len(passed),
+        "failed":  len(failed),
+        "students": ranked
+    }
+
+    with open("output/report_summary.json", "w", encoding="utf-8") as f:
+        json.dump(summary, f, indent=4)
+
+    print("Saved: output/report_summary.json")
+
+    # Print summary to console
+    print(f"\n{'=' * 42}")
+    print(f"  REPORT SUMMARY")
+    print(f"{'=' * 42}")
+    print(f"  Total   : {len(students)}")
+    print(f"  Average : {avg:.1f}")
+    print(f"  Topper  : {topper['name']} ({topper['marks']})")
+    print(f"  Passed  : {len(passed)}  |  Failed: {len(failed)}")
+    print(f"{'=' * 42}")
+
+    # Print what the txt report looks like
+    print("\n--- Contents of output/student_report.txt ---")
+    with open("output/student_report.txt", "r", encoding="utf-8") as f:
+        print(f.read())
+
+
+# =============================================================================
+# QUICK REFERENCE CHEAT SHEET
+# =============================================================================
+#
+#  ── TXT Files ──────────────────────────────────────────────────────────────
+#  open(path, "r")           → read   (file must exist)
+#  open(path, "w")           → write  (creates / OVERWRITES)
+#  open(path, "a")           → append (adds to end, creates if missing)
+#  open(path, "x")           → create (fails if file already exists)
+#  f.read()                  → whole file as one string
+#  f.readlines()             → all lines as a list (includes \n)
+#  f.readline()              → one line at a time
+#  f.write("text")           → write a string
+#  f.writelines(["a\n","b"]) → write a list of strings
+#  line.strip()              → remove \n and extra spaces from a line
+#  content.splitlines()      → split string into list of lines (no \n)
+#  content.split()           → split string into list of words
+#
+#  ── CSV Files ──────────────────────────────────────────────────────────────
+#  Always use newline="" when opening CSV files!
+#  csv.reader(f)             → rows as lists   (access by index: row[0])
+#  csv.DictReader(f)         → rows as dicts   (access by name: row["name"])
+#  csv.writer(f)             → write from lists
+#  csv.DictWriter(f, fieldnames=[...]) → write from dicts
+#  writer.writerow([...])    → write one row
+#  writer.writerows([[...]])  → write many rows at once
+#  writer.writeheader()      → write column names as header row
+#  next(reader)              → skip the header row (for csv.reader)
+#  All CSV values are STRINGS — convert with int(), float() as needed!
+#
+#  ── JSON Files ─────────────────────────────────────────────────────────────
+#  json.load(f)              → read JSON file  → Python dict/list
+#  json.loads(string)        → read JSON string → Python dict/list
+#  json.dump(data, f)        → write Python data → JSON file
+#  json.dumps(data)          → Python data → JSON string (no file)
+#  indent=4                  → pretty format with 4-space indentation
+#  ensure_ascii=False        → allow ₹, é, and other special characters
+#  To update JSON: read → modify Python dict → write back
+#
+#  ── Error Handling ─────────────────────────────────────────────────────────
+#  Always wrap file code in try-except!
+#  FileNotFoundError  → file does not exist
+#  PermissionError    → no read/write permission
+#  Exception as e     → catch any other error
 
 
 # =============================================================================
