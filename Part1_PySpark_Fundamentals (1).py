@@ -150,8 +150,8 @@ display(dbutils.fs.ls("/databricks-datasets"))   # display() renders a nice inte
 # COMMAND ----------
 
 # 2) Create a folder in DBFS (like "mkdir") - useful to organize your own practice files
-dbutils.fs.mkdirs("/tmp/pyspark_course/part1")        # creates a folder (no error if it already exists)
-display(dbutils.fs.ls("/tmp/pyspark_course"))          # confirm the folder was created
+dbutils.fs.mkdirs("/Volumes/ml/ai_schema/somedatavolume/new")      # creates a folder (no error if it already exists)
+display(dbutils.fs.ls("/Volumes/ml/ai_schema/somedatavolume/"))          # confirm the folder was created
 
 # COMMAND ----------
 
@@ -170,9 +170,13 @@ for conf in spark.sparkContext.getConf().getAll()[:10]:   # only first 10 settin
 # COMMAND ----------
 
 # 5) See what catalogs/schemas/tables exist (Unity Catalog / Hive Metastore)
-display(spark.catalog.listCatalogs())     # lists all catalogs available to you
+for c in spark.catalog.listCatalogs():
+    print(c.name)   # lists all catalogs available to you
+
 display(spark.catalog.listDatabases())    # lists schemas/databases in the current catalog
-display(spark.catalog.listTables())       # lists tables in the CURRENT database
+
+for t in spark.catalog.listTables():
+    print(t.name)     # lists tables in the CURRENT database
 
 # COMMAND ----------
 
@@ -215,28 +219,145 @@ rdd = spark.sparkContext.parallelize(data)          # Convert Python list into a
 rdd_result = rdd.filter(lambda x: x[1] > 48000).map(lambda x: x[0])   # manual lambdas, no column names
 print("RDD Result:", rdd_result.collect())          # collect() pulls all distributed data back to Driver
 
-# 2) DataFrame approach
+
+
+# COMMAND ----------
+
+# 2) DataFrame approach- List of tuple
+data = [("Amit", 50000), ("Sneha", 60000), ("Raj", 45000)]
 df = spark.createDataFrame(data, ["name", "salary"])
 df_result = df.filter(df.salary > 48000).select("name")
 df_result.show()
 
 # COMMAND ----------
 
-# ---- Example B: More common RDD transformations (good to recognize even though we mainly use DataFrames) ----
-words_rdd = spark.sparkContext.parallelize(["pyspark is fun", "spark is fast", "pyspark is powerful"])
+#DF using list of dict
+data = [
+    {"name": "Amit", "salary": 50000},
+    {"name": "Sneha", "salary": 60000},
+    {"name": "Raj", "salary": 45000}
+]
 
-# map(): transforms EACH element 1-to-1
+df = spark.createDataFrame(data)
+
+df.filter(df.salary > 48000).select("name").show()
+
+# COMMAND ----------
+
+# ---- Example B: More common RDD transformations ----
+
+words_rdd = spark.sparkContext.parallelize([
+    "pyspark is fun",
+    "spark is fast",
+    "pyspark is powerful"
+])
+
+# map(): transforms EACH element (1-to-1)
 upper_rdd = words_rdd.map(lambda line: line.upper())
 print("map() ->", upper_rdd.collect())
 
-# flatMap(): transforms each element into MULTIPLE elements and flattens the result (1-to-many)
+# Output:
+# map() -> ['PYSPARK IS FUN', 'SPARK IS FAST', 'PYSPARK IS POWERFUL']
+
+
+# flatMap(): transforms each element into MULTIPLE elements (1-to-many)
 split_words = words_rdd.flatMap(lambda line: line.split(" "))
 print("flatMap() ->", split_words.collect())
 
-# reduceByKey(): classic word-count pattern - group by key and aggregate
-word_pairs = split_words.map(lambda word: (word, 1))                 # ("pyspark", 1), ("is", 1), ...
-word_counts = word_pairs.reduceByKey(lambda a, b: a + b)              # sums counts per unique word
-print("reduceByKey() word count ->", word_counts.collect())
+# Output:
+# flatMap() ->
+# ['pyspark', 'is', 'fun',
+#  'spark', 'is', 'fast',
+#  'pyspark', 'is', 'powerful']
+
+
+# reduceByKey(): classic Word Count example
+word_pairs = split_words.map(lambda word: (word, 1))
+print("Word Pairs ->", word_pairs.collect())
+
+# Output:
+# Word Pairs ->
+# [('pyspark', 1), ('is', 1), ('fun', 1),
+#  ('spark', 1), ('is', 1), ('fast', 1),
+#  ('pyspark', 1), ('is', 1), ('powerful', 1)]
+
+
+word_counts = word_pairs.reduceByKey(lambda a, b: a + b)
+print("reduceByKey() Word Count ->", word_counts.collect())
+
+# Output:
+# reduceByKey() Word Count ->
+# [('pyspark', 2),
+#  ('is', 3),
+#  ('fun', 1),
+#  ('spark', 1),
+#  ('fast', 1),
+#  ('powerful', 1)]
+
+# COMMAND ----------
+
+from pyspark.sql.functions import col, upper, split, explode, count
+
+# -------------------------------------------------------------------
+# Create a DataFrame
+# Each tuple represents one row with a single column named "sentence"
+# -------------------------------------------------------------------
+data = [
+    ("pyspark is fun",),
+    ("spark is fast",),
+    ("pyspark is powerful",)
+]
+
+df = spark.createDataFrame(data, ["sentence"])
+
+
+# -------------------------------------------------------------------
+# map() Equivalent
+# RDD: map()
+# DataFrame: select() with a function
+#
+# upper() converts every sentence to uppercase.
+# A new DataFrame is returned (original DataFrame is unchanged).
+# -------------------------------------------------------------------
+upper_df = df.select(
+    upper(col("sentence")).alias("sentence")
+)
+
+display(upper_df)
+
+
+# -------------------------------------------------------------------
+# flatMap() Equivalent
+# RDD: flatMap()
+# DataFrame: split() + explode()
+#
+# split() converts each sentence into an array of words.
+# explode() creates one row for each word in the array.
+# -------------------------------------------------------------------
+split_words = df.select(
+    explode(
+        split(col("sentence"), " ")
+    ).alias("word")
+)
+
+display(split_words)
+
+
+# -------------------------------------------------------------------
+# reduceByKey() Equivalent
+# RDD: reduceByKey()
+# DataFrame: groupBy() + agg()
+#
+# groupBy("word") groups identical words together.
+# count("*") counts how many times each word appears.
+# -------------------------------------------------------------------
+word_counts = (
+    split_words
+        .groupBy("word")
+        .agg(count("*").alias("count"))
+)
+
+display(word_counts)
 
 # COMMAND ----------
 
