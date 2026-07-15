@@ -499,6 +499,8 @@ employee_data = [
     (2, "Sneha", "HR",    48000.0, 32),
     (3, "Raj",   "Sales", 62000.0, 25),
     (4, "Priya", "IT",    71000.0, 30),
+    (5, "Ravi",  "Sales", 58000.0, 35),
+    (6, "Karan", "Sales", 39000.0, 27),
 ]
 df_emp = spark.createDataFrame(employee_data, schema=employee_schema)
 df_emp.printSchema()
@@ -521,6 +523,10 @@ nested_schema = StructType([
 nested_data = [
     (1, "Amit", ("MG Road", "Pune", "411001")),
     (2, "Sneha", ("Park Street", "Kolkata", "700016")),
+    (3, "Raj",   ("Churchgate", "Mumbai", "400001)")),
+    (4, "Priya", ["IT", "SQL", "Spark"]),                   # can also pass a LIST directly
+    (5, "Karan", ["Sales", "Data Science", "AWS"]),          # can also pass a LIST directly
+    (6, "Neha",  ["HR", "Recruiting", "Talent Acquisition"]),
 ]
 df_nested = spark.createDataFrame(nested_data, schema=nested_schema)
 df_nested.show(truncate=False)
@@ -533,6 +539,11 @@ df_nested.select("name", "address.city", "address.pincode").show()
 
 # ---- 6.3 ArrayType and MapType columns ----
 # Real-life example: each employee has multiple "skills" (array) and "ratings" per year (map)
+from pyspark.sql.types import (
+    StructType, StructField, IntegerType, StringType, DoubleType,
+    ArrayType, MapType
+)
+from pyspark.sql.functions import col
 array_map_schema = StructType([
     StructField("id", IntegerType(), True),
     StructField("skills", ArrayType(StringType()), True),          # a LIST of strings
@@ -546,6 +557,10 @@ array_map_data = [
 df_array_map = spark.createDataFrame(array_map_data, schema=array_map_schema)
 df_array_map.show(truncate=False)
 df_array_map.printSchema()
+# Select the first element (index starts from 0)
+df_array_map.select(
+    col("skills")[1].alias("second_skill")
+).show()
 
 # COMMAND ----------
 
@@ -570,6 +585,34 @@ df_array_map.printSchema()
 
 # MAGIC %md
 # MAGIC ## 7. show(), display(), printSchema(), describe(), summary()
+
+# COMMAND ----------
+
+from pyspark.sql.types import (
+    StructType, StructField, IntegerType, StringType, DoubleType,
+    ArrayType, MapType
+)
+
+# ---- 6.1 Simple flat schema ----
+employee_schema = StructType([
+    StructField("id",         IntegerType(), False),  # NOT nullable - id must always exist
+    StructField("name",       StringType(),  True),
+    StructField("department", StringType(),  True),
+    StructField("salary",     DoubleType(),  True),
+    StructField("age",        IntegerType(), True),
+])
+
+employee_data = [
+    (1, "Amit",  "IT",    55000.0, 28),
+    (2, "Sneha", "HR",    48000.0, 32),
+    (3, "Raj",   "Sales", 62000.0, 25),
+    (4, "Priya", "IT",    71000.0, 30),
+    (5, "Ravi",  "Sales", 58000.0, 35),
+    (6, "Karan", "Sales", 39000.0, 27),
+]
+df_emp = spark.createDataFrame(employee_data, schema=employee_schema)
+df_emp.printSchema()
+df_emp.show()
 
 # COMMAND ----------
 
@@ -622,6 +665,17 @@ df_emp.select(df_emp.name, df_emp.salary).show()             # dot-notation
 df_emp.select(df_emp["name"], df_emp["salary"]).show()        # bracket-notation (useful when column name has spaces/special chars)
 df_emp.select("*").show()                                      # select ALL columns (like SQL SELECT *)
 df_emp.select([c for c in df_emp.columns if c != "age"]).show()  # select all columns EXCEPT one, using a Python list comprehension
+
+# Create an empty list
+cols = []
+
+# Add all columns except "age"
+for c in df_emp.columns:
+    if c != "age":
+        cols.append(c)
+
+# Select those columns
+df_emp.select(cols).show()
 
 # COMMAND ----------
 
