@@ -78,15 +78,39 @@ df_source = spark.createDataFrame(employee_data, employee_columns)
 df_source.show()
 
 # Write this ONE dataframe out to CSV, JSON, Parquet, ORC, and plain Text so we have files to read in Section 1.
-df_source.write.mode("overwrite").option("header", True).csv(f"{base_path}/employees_csv")
+# df_source.write.mode("overwrite").option("header", True).csv(f"{base_path}/employees_csv")
 # df_source.write.mode("overwrite").json(f"{base_path}/employees_json")
 # df_source.write.mode("overwrite").parquet(f"{base_path}/employees_parquet")
 # df_source.write.mode("overwrite").orc(f"{base_path}/employees_orc")
-# df_source.selectExpr("concat_ws(',', id, name, department, salary, age, city) as line") \
-#          .write.mode("overwrite").text(f"{base_path}/employees_text")   # text() needs a SINGLE string column
+
+df_source.selectExpr("concat_ws(',', id, name, department, salary, age, city) as line") \
+         .write.mode("overwrite").text(f"{base_path}/employees_text")   # text() needs a SINGLE string column
 
 print("Sample files created under:", base_path)
 display(dbutils.fs.ls(base_path))
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ORC format:ORC (which stands for Optimized Row Columnar) is a free, open-source, column-oriented data storage format.
+# MAGIC
+# MAGIC id column
+# MAGIC ---------
+# MAGIC 1
+# MAGIC 2
+# MAGIC 3
+# MAGIC
+# MAGIC name column
+# MAGIC -----------
+# MAGIC Amit
+# MAGIC Neha
+# MAGIC Rahul
+# MAGIC
+# MAGIC salary column
+# MAGIC -------------
+# MAGIC 50000
+# MAGIC 54000
+# MAGIC 70000
 
 # COMMAND ----------
 
@@ -113,35 +137,40 @@ display(dbutils.fs.ls(base_path))
 
 # COMMAND ----------
 
+base_path = "/Volumes/pysparkcatalog/pyspark_schema/files/pyspark_part2_sample_files"
+
+# COMMAND ----------
+
 # ---- 10.1 Reading CSV ----
-df_csv = spark.read.option("header", True).option("inferSchema", True).csv(f"{base_path}/employees_csv")
+df_csv = spark.read.option("header", True).option("inferSchema", True).csv(f"{base_path}/employees.csv")
 df_csv.show()
 df_csv.printSchema()
+#inferSchema tells Spark to automatically detect the data type of each column instead of reading everything as a string.
 
 # COMMAND ----------
 
 # ---- 10.2 Reading JSON ----
-df_json = spark.read.json(f"{base_path}/employees_json")   # JSON is self-describing -> schema inferred automatically, no options needed
+df_json = spark.read.json(f"{base_path}/employees.json")   # JSON is self-describing -> schema inferred automatically, no options needed
 df_json.show()
 df_json.printSchema()
 
 # COMMAND ----------
 
 # ---- 10.3 Reading Parquet (schema is stored INSIDE the file - no inferSchema/header options needed at all) ----
-df_parquet = spark.read.parquet(f"{base_path}/employees_parquet")
+df_parquet = spark.read.parquet(f"{base_path}/employees.parquet")
 df_parquet.show()
 df_parquet.printSchema()          # notice: correct types (int, double) came back automatically - Parquet remembers them!
 
 # COMMAND ----------
 
 # ---- 10.4 Reading ORC ----
-df_orc = spark.read.orc(f"{base_path}/employees_orc")
+df_orc = spark.read.orc(f"{base_path}/employees_sample.orc")
 df_orc.show()
 
 # COMMAND ----------
 
 # ---- 10.5 Reading plain Text (every line becomes ONE row in a single column called "value") ----
-df_text = spark.read.text(f"{base_path}/employees_text")
+df_text = spark.read.text(f"{base_path}/employees.txt")
 df_text.show(truncate=False)
 df_text.printSchema()             # always just one column: "value" (StringType)
 
