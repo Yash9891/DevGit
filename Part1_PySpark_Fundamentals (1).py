@@ -739,6 +739,7 @@ df_emp.withColumn("age", col("age").cast("double")).printSchema()
 
 df_emp.drop("age").show()                       # drop ONE column
 df_emp.drop("age", "department").show()          # drop MULTIPLE columns at once
+
 df_dup_col = df_emp.withColumn("id_copy", col("id"))
 df_dup_col.drop(df_dup_col.id_copy).show()        # drop using column object reference (useful after joins with duplicate names)
 
