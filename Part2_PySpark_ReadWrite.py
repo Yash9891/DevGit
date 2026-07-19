@@ -234,17 +234,28 @@ df_generic.show(3)
 # COMMAND ----------
 
 # ---- Create a MESSY csv file on purpose (with a bad row) so we can practice error handling ----
+
+base_path = "/Volumes/pysparkcatalog/pyspark_schema/files/pyspark_part2_sample_files"
+
 messy_csv_content = """id,name,department,salary
 1,Amit,IT,55000
 2,Sneha,HR,48000
-BAD_ROW_HERE_ONLY_TWO_FIELDS,IT
+BAD_ROW_HERE_ONLY_TWO_FIELDS,IT,67.005
 4,Priya,IT,71000"""
 
-dbutils.fs.put(f"{base_path}/messy_data.csv", messy_csv_content, overwrite=True)   # write raw text directly to DBFS
+dbutils.fs.put(f"{base_path}/messy_data2.csv", messy_csv_content, overwrite=True)   # write raw text directly to DBFS
 
 # COMMAND ----------
 
-# ---- 11.1 PERMISSIVE mode (default): bad row survives as NULLs + optionally captured ----
+base_path = "/Volumes/pysparkcatalog/pyspark_schema/files/pyspark_part2_sample_files/messy_data2.csv"
+df=spark.read.option("header", True).csv(base_path)
+df.display()
+
+# COMMAND ----------
+
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType
+#---- 11.1 PERMISSIVE mode (default): bad row survives as NULLs + optionally captured ----
+
 messy_schema = StructType([
     StructField("id", IntegerType(), True),
     StructField("name", StringType(), True),
@@ -259,19 +270,24 @@ df_permissive = (
     .option("mode", "PERMISSIVE")
     .option("columnNameOfCorruptRecord", "_corrupt_record")   # tell Spark WHERE to store the raw bad line
     .schema(messy_schema)                                       # NOTE: columnNameOfCorruptRecord requires an explicit schema!
-    .csv(f"{base_path}/messy_data.csv")
+    .csv(f"{base_path}")
 )
 df_permissive.show(truncate=False)   # the bad row shows as NULL fields + its raw text in "_corrupt_record"
 
 # COMMAND ----------
 
 # ---- 11.2 DROPMALFORMED mode: bad row silently disappears ----
+from pyspark.sql.functions import col
+from pyspark.sql.types import IntegerType
 df_dropmalformed = (
     spark.read
     .option("header", True)
     .option("inferSchema", True)
     .option("mode", "DROPMALFORMED")
-    .csv(f"{base_path}/messy_data.csv")
+    .csv(f"{base_path}")
+)
+df_dropmalformed = df_dropmalformed.withColumn(
+    "id", col("id").cast("int")
 )
 df_dropmalformed.show()   # only 3 GOOD rows remain - the bad row is gone with no warning printed
 
@@ -284,7 +300,7 @@ try:
         .option("header", True)
         .option("inferSchema", True)
         .option("mode", "FAILFAST")
-        .csv(f"{base_path}/messy_data.csv")
+        .csv(f"{base_path}")
     )
     df_failfast.show()          # this line will NEVER be reached if a bad row exists
 except Exception as e:
@@ -306,7 +322,7 @@ def safe_read_csv(path):
         print(f"⚠️ Failed to read {path}: {err}")
         return None
 
-result_df = safe_read_csv(f"{base_path}/employees_csv")
+result_df = safe_read_csv(f"{base_path}")
 if result_df is not None:
     result_df.show(3)
 
@@ -345,6 +361,7 @@ df_multiline.show()
 # COMMAND ----------
 
 # ---- Custom delimiter example (e.g. pipe-separated values) ----
+base_path = "/Volumes/pysparkcatalog/pyspark_schema/files/pyspark_part2_sample_files/"
 pipe_data = "id|name|department\n1|Amit|IT\n2|Sneha|HR"
 dbutils.fs.put(f"{base_path}/pipe_data.csv", pipe_data, overwrite=True)
 
@@ -365,14 +382,69 @@ df_pipe.show()
 
 # COMMAND ----------
 
+# ============================================================
+# WRITE MODE: error / errorifexists
+# ============================================================
+
+# 1. Create sample DataFrame
+data = [
+    (1, "Amit", "IT", 55000),
+    (2, "Sneha", "HR", 48000),
+    (3, "Rahul", "Finance", 62000),
+    (4, "Priya", "IT", 71000)
+]
+
+columns = ["id", "name", "department", "salary"]
+
+df_source = spark.createDataFrame(data, columns)
+
+print("Source Data:")
+df_source.show()
+
+
+# 2. Define paths
+base_path = "/Volumes/pysparkcatalog/pyspark_schema/files/pyspark_part2_sample_files"
 output_path = f"{base_path}/write_demo"
 
-# ---- error / errorifexists (the DEFAULT mode if you don't specify one) ----
-df_source.write.mode("error").csv(f"{output_path}_v1")     # works fine the FIRST time (path is empty)
+
+# 3. Optional cleanup - makes the cell runnable again from scratch
+# dbutils.fs.rm(f"{output_path}_v1", True)
+
+
+# 4. FIRST WRITE
+# "error" is also Spark's default write mode.
+# It works because the path does not exist yet.
+
+df_source.write \
+    .mode("error") \
+    .option("header", True) \
+    .csv(f"{output_path}_v1")
+
+print("✅ First write successful")
+
+
+# 5. SECOND WRITE to the SAME path
+# This fails because the output path already exists.
+
 try:
-    df_source.write.mode("error").csv(f"{output_path}_v1")  # SECOND time -> fails, path already has data
+    df_source.write \
+        .mode("error") \
+        .option("header", True) \
+        .csv(f"{output_path}_v1")
+
 except Exception as e:
-    print("❌ 'error' mode blocked the write as expected:", str(e)[:200])
+    print("❌ 'error' mode blocked the second write as expected")
+    print("Error:", str(e)[:500])
+
+
+# 6. Read the successfully written CSV files
+df_result = spark.read \
+    .option("header", True) \
+    .option("inferSchema", True) \
+    .csv(f"{output_path}_v1")
+
+print("Data already present in output path:")
+df_result.show()
 
 # COMMAND ----------
 
@@ -383,16 +455,20 @@ print("Row count still same as before (write was skipped):", spark.read.csv(f"{o
 # COMMAND ----------
 
 # ---- overwrite ----
-df_half = df_source.filter(col("department") == "IT")        # only 3 rows
+df_half = df_source.filter(col("department") == "IT")        # only 2 rows
 df_half.write.mode("overwrite").option("header", True).csv(f"{output_path}_v1")
 print("Row count after OVERWRITE with only IT dept:", spark.read.option("header", True).csv(f"{output_path}_v1").count())
+df_read=spark.read.option("header", True).csv(f"{output_path}_v1")
+df_read.show()
 
 # COMMAND ----------
 
 # ---- append ----
-df_more = df_source.filter(col("department") == "HR")        # 2 more rows
+df_more = df_source.filter(col("department") == "HR")        # 3 more rows
 df_more.write.mode("append").option("header", True).csv(f"{output_path}_v1")
 print("Row count after APPEND (IT rows + HR rows):", spark.read.option("header", True).csv(f"{output_path}_v1").count())
+df_read=spark.read.option("header", True).csv(f"{output_path}_v1")
+df_read.show()
 
 # COMMAND ----------
 
